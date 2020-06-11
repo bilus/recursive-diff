@@ -1,6 +1,9 @@
 Project: github.com/bilus/recursive-diff
 
-js:build: |
-  pwd
-   # npm install
-   # npm build
+build: |
+  set -e
+  root=${Oya[BasePath]}  # The dir this Oyafile is in.
+  cd $root
+  npm install
+  npm build
+  cp dist/recursive-diff.min.js $1
