@@ -1,0 +1,6 @@
+Project: github.com/bilus/recursive-diff
+
+js:build: |
+  pwd
+   # npm install
+   # npm build
