@@ -1,3 +1,4 @@
+-   0.2.0 (bilus) - Added support for treating arrays as atomic objects and `scalar` field.
 -   0.1.1 - Added support of **null** value for any key in a object.
 -   0.1.2 - Added support of an Optional **callBack** function in applyDiff method and improving tests. Please check the sample code to know how to use callback. Thanks to [Isabella Cerbinos][1] contribution
 -   0.1.4 - Improved error handling, included stack trace in errors. Credits: [Giannis Poulis][2]

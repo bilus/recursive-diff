@@ -126,7 +126,7 @@ describe('diff tests', () => {
       },
     };
     delta = diff.getDiff(a, b);
-    c = diff.applyDiff(a, delta, () => {});
+    c = diff.applyDiff(a, delta, () => { });
     assert.deepEqual(b, c);
   });
 
@@ -161,7 +161,7 @@ describe('diff tests', () => {
   });
 
   it('testing complex deep object', () => {
-    function fn() {} // two function can be equal if they hold same reference
+    function fn() { } // two function can be equal if they hold same reference
     a = {
       a: fn,
       b: [1, 2, [3, 4]],
@@ -187,7 +187,7 @@ describe('diff tests', () => {
       d: null,
     };
     delta = diff.getDiff(a, b);
-    c = diff.applyDiff(a, delta, () => {});
+    c = diff.applyDiff(a, delta, () => { });
     assert.deepEqual(b, c);
   });
   it('testing diff format if oldValue is needed into diff', () => {
@@ -213,6 +213,7 @@ describe('diff tests', () => {
         ],
         val: 2,
         oldVal: 1,
+        scalar: true,
       },
       {
         op: 'delete',
@@ -221,6 +222,7 @@ describe('diff tests', () => {
           'c',
         ],
         oldVal: 2,
+        scalar: true,
       },
       {
         op: 'add',
@@ -230,6 +232,7 @@ describe('diff tests', () => {
           1,
         ],
         val: 2,
+        scalar: true,
       },
     ];
     delta = diff.getDiff(a, b, true); // old value in the diff
@@ -238,5 +241,53 @@ describe('diff tests', () => {
     delete expectedDiff[1].oldVal;
     delta = diff.getDiff(a, b); // no old value in the diff
     assert.deepEqual(delta, expectedDiff);
+  });
+  it('testing array are optionally treated as a whole', () => {
+    a = {
+      a: {
+        c: [1],
+        d: [1],
+      },
+    };
+    b = {
+      a: {
+        b: [2],
+        d: [1, 2],
+      },
+    };
+    const expectedDiff = [
+      {
+        op: 'delete',
+        path: [
+          'a',
+          'c',
+        ],
+        oldVal: [1],
+        scalar: false,
+      },
+      {
+        op: 'update',
+        path: [
+          'a',
+          'd',
+        ],
+        oldVal: [1],
+        val: [1, 2],
+        scalar: false,
+      },
+      {
+        op: 'add',
+        path: [
+          'a',
+          'b',
+        ],
+        val: [2],
+        scalar: false,
+      },
+    ];
+    delta = diff.getDiff(a, b, true, true); // old value in the diff, array mode
+    assert.deepEqual(delta, expectedDiff);
+    c = diff.applyDiff(a, delta, () => { });
+    assert.deepEqual(b, c);
   });
 });

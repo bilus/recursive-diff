@@ -30,8 +30,9 @@ function getType(x) {
   return type;
 }
 
-function isTraversalNeeded(type1, type2) {
-  return type1 === type2 && iterableTypes.indexOf(type1) >= 0;
+function isTraversalNeeded(type1, type2, atomicArrays) {
+  return type1 === type2 && iterableTypes.indexOf(type1) >= 0
+    && (!atomicArrays || type2 !== types.ARRAY);
 }
 
 function areEqual(x, y, type1, type2) {
@@ -68,7 +69,23 @@ function getKeys(x, y, type) {
   return keys;
 }
 
-function makeDiff(x, y, op, path, keepOldVal) {
+function isScalar(type) {
+  return type !== types.ARRAY
+    && type !== types.MAP
+    && type !== types.SET
+    && type !== types.ITERABLE_OBJECT;
+}
+
+function guessIsScalar(xType, yType) {
+  // Use the type of the right-hand side value unless it cannot be inferred from,
+  // falling-back on the left-hand side.
+  if (yType === types.NULL || yType === types.UNDEFINED) {
+    return isScalar(xType);
+  }
+  return isScalar(yType);
+}
+
+function makeDiff(x, y, op, path, keepOldVal, xType, yType) {
   const diffOb = {
     op,
     path,
@@ -79,25 +96,26 @@ function makeDiff(x, y, op, path, keepOldVal) {
   if (keepOldVal && op !== 'add') {
     diffOb.oldVal = x;
   }
+  diffOb.scalar = guessIsScalar(xType, yType);
   return diffOb;
 }
 
-function privateGetDiff(x, y, keepOldVal, path, diff) {
+function privateGetDiff(x, y, keepOldVal, atomicArrays, path, diff) {
   const type1 = getType(x);
   const type2 = getType(y);
   const currPath = path || [];
   const currDiff = diff || [];
-  if (isTraversalNeeded(type1, type2)) {
+  if (isTraversalNeeded(type1, type2, atomicArrays)) {
     const iterator = getKeys(x, y, type1).values();
     let key = iterator.next().value;
     while (key != null) {
-      privateGetDiff(x[key], y[key], keepOldVal, currPath.concat(key), currDiff);
+      privateGetDiff(x[key], y[key], keepOldVal, atomicArrays, currPath.concat(key), currDiff);
       key = iterator.next().value;
     }
   } else {
     const op = computeOp(x, y, type1, type2);
     if (op != null) {
-      currDiff.push(makeDiff(x, y, op, path, keepOldVal));
+      currDiff.push(makeDiff(x, y, op, path, keepOldVal, type1, type2));
     }
   }
   return currDiff;
@@ -123,8 +141,8 @@ function privateApplyDiff(x, diff, visitorCallback) {
 }
 
 module.exports = {
-  getDiff(x, y, keepOldValInDiff = false) {
-    return privateGetDiff(x, y, keepOldValInDiff);
+  getDiff(x, y, keepOldValInDiff = false, atomicArrays = false) {
+    return privateGetDiff(x, y, keepOldValInDiff, atomicArrays);
   },
   applyDiff(x, diff, visitorCallback) {
     return privateApplyDiff(x, diff, visitorCallback);
