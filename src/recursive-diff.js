@@ -16,6 +16,7 @@ const checkType = {
 
 const checkEqualityForComplexTypes = {
   [types.DATE]: utils.areDatesEqual,
+  [types.ARRAY]: utils.areArraysEqual,
 };
 
 function getType(x) {

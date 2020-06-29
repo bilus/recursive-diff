@@ -13,7 +13,7 @@ const isIterableObject = (x) => {
   const type = Object.prototype.toString.call(x);
   return type === '[object Object]';
 };
-const noop = () => {};
+const noop = () => { };
 
 const areDatesEqual = (dt1, dt2) => dt1.getTime() === dt2.getTime();
 
@@ -68,6 +68,11 @@ function deleteValueByPath(ob, path) {
   return ob;
 }
 
+function areArraysEqual(l, r) {
+  // Poor-man's equality comparison but good enough for what we need.
+  return JSON.stringify(l) === JSON.stringify(r);
+}
+
 module.exports = {
   isNumber,
   isBoolean,
@@ -81,6 +86,7 @@ module.exports = {
   isIterableObject,
   noop,
   areDatesEqual,
+  areArraysEqual,
   setValueByPath,
   deleteValueByPath,
 };

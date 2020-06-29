@@ -247,12 +247,14 @@ describe('diff tests', () => {
       a: {
         c: [1],
         d: [1],
+        e: [1, 2, 3],
       },
     };
     b = {
       a: {
         b: [2],
         d: [1, 2],
+        e: [1, 2, 3],
       },
     };
     const expectedDiff = [
