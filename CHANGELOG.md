@@ -1,3 +1,4 @@
+-   1.3.0 (bilus) - Add verbose option, splitting changes to objects into a separate entry for each field.
 -   1.2.2 (bilus) - Fixed how atomic arrays are compared.
 -   1.2.1 (bilus) - Fixed build oya task.
 -   1.2.0 (bilus) - Added support for treating arrays as atomic objects and `scalar` field.

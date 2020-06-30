@@ -31,9 +31,15 @@ function getType(x) {
   return type;
 }
 
-function isTraversalNeeded(type1, type2, atomicArrays) {
-  return type1 === type2 && iterableTypes.indexOf(type1) >= 0
-    && (!atomicArrays || type2 !== types.ARRAY);
+function isIterable(type) {
+  return iterableTypes.indexOf(type) >= 0;
+}
+
+function isTraversalNeeded(type1, type2, atomicArrays, verbose) {
+  return (type1 === type2 && isIterable(type1)
+    && (!atomicArrays || type2 !== types.ARRAY))
+    || (verbose && ((type1 === types.ITERABLE_OBJECT && type2 === types.UNDEFINED)
+      || (type2 === types.ITERABLE_OBJECT && type1 === types.UNDEFINED)));
 }
 
 function areEqual(x, y, type1, type2) {
@@ -101,22 +107,45 @@ function makeDiff(x, y, op, path, keepOldVal, xType, yType) {
   return diffOb;
 }
 
-function privateGetDiff(x, y, keepOldVal, atomicArrays, path, diff) {
+function privateGetDiff(x, y, keepOldVal, atomicArrays, verbose, path, diff) {
   const type1 = getType(x);
   const type2 = getType(y);
   const currPath = path || [];
   const currDiff = diff || [];
-  if (isTraversalNeeded(type1, type2, atomicArrays)) {
-    const iterator = getKeys(x, y, type1).values();
-    let key = iterator.next().value;
-    while (key != null) {
-      privateGetDiff(x[key], y[key], keepOldVal, atomicArrays, currPath.concat(key), currDiff);
-      key = iterator.next().value;
+  if (isTraversalNeeded(type1, type2, atomicArrays, verbose)) {
+    // TODO: Refactor this code.
+    if (type1 === types.UNDEFINED) {
+      // assert(isIterable(type2));
+      const iterator = getKeys(y, y, type2).values(); // TODO: Adapt getKeys to this use case.
+      let key = iterator.next().value;
+      while (key != null) {
+        privateGetDiff(undefined, y[key], keepOldVal, atomicArrays, verbose,
+          currPath.concat(key), currDiff);
+        key = iterator.next().value;
+      }
+    } else if (type2 === types.UNDEFINED) {
+      // assert(isIterable(type2));
+      const iterator = getKeys(x, x, type1).values(); // TODO: Adapt getKeys to this use case.
+      let key = iterator.next().value;
+      while (key != null) {
+        privateGetDiff(x[key], undefined, keepOldVal, atomicArrays, verbose,
+          currPath.concat(key), currDiff);
+        key = iterator.next().value;
+      }
+    } else {
+      const iterator = getKeys(x, y, type1).values();
+      let key = iterator.next().value;
+      while (key != null) {
+        privateGetDiff(x[key], y[key], keepOldVal, atomicArrays, verbose,
+          currPath.concat(key), currDiff);
+        key = iterator.next().value;
+      }
     }
   } else {
     const op = computeOp(x, y, type1, type2);
     if (op != null) {
-      currDiff.push(makeDiff(x, y, op, path, keepOldVal, type1, type2));
+      const diffItem = makeDiff(x, y, op, path, keepOldVal, type1, type2);
+      currDiff.push(diffItem);
     }
   }
   return currDiff;
@@ -142,8 +171,8 @@ function privateApplyDiff(x, diff, visitorCallback) {
 }
 
 module.exports = {
-  getDiff(x, y, keepOldValInDiff = false, atomicArrays = false) {
-    return privateGetDiff(x, y, keepOldValInDiff, atomicArrays);
+  getDiff(x, y, keepOldValInDiff = false, atomicArrays = false, verbose = false) {
+    return privateGetDiff(x, y, keepOldValInDiff, atomicArrays, verbose);
   },
   applyDiff(x, diff, visitorCallback) {
     return privateApplyDiff(x, diff, visitorCallback);

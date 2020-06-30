@@ -292,4 +292,78 @@ describe('diff tests', () => {
     c = diff.applyDiff(a, delta, () => { });
     assert.deepEqual(b, c);
   });
+  it('testing objects compared with empty objects are broken into constituent parts with verbose flag', () => {
+    a = {
+      a: {},
+      g: {
+        h: 1,
+        i: 1,
+      },
+    };
+    b = {
+      a: {
+        b: [2],
+      },
+      c: {
+        d: {
+          e: 2,
+        },
+        f: 2,
+      },
+    };
+    const expectedDiff = [
+      {
+        op: 'add',
+        path: [
+          'a',
+          'b',
+        ],
+        val: [2],
+        scalar: false,
+      },
+      {
+        op: 'delete',
+        path: [
+          'g',
+          'h',
+        ],
+        oldVal: 1,
+        scalar: true,
+      },
+      {
+        op: 'delete',
+        path: [
+          'g',
+          'i',
+        ],
+        oldVal: 1,
+        scalar: true,
+      },
+      {
+        op: 'add',
+        path: [
+          'c',
+          'd',
+          'e',
+        ],
+        val: 2,
+        scalar: true,
+      },
+      {
+        op: 'add',
+        path: [
+          'c',
+          'f',
+        ],
+        val: 2,
+        scalar: true,
+      },
+    ];
+    // old value in the diff, atomic array mode, verbose mode.
+    delta = diff.getDiff(a, b, true, true, true);
+    assert.deepEqual(delta, expectedDiff);
+    // TODO: Fix applyDif so it handles c.d.e patching. We don't need it in our project for now.
+    // c = diff.applyDiff(a, delta, () => { });
+    // assert.deepEqual(b, c);
+  });
 });
